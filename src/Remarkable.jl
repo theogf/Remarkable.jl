@@ -19,10 +19,21 @@ end
 
 set_token!(c::RemarkableClient, tok::String) = c.token = tok
 
+function dict_to_query(d::Dict)
+    query = ""
+    for (key, value) in d
+        query *= "$(key)=$(value)&"
+    end
+    query = query[1:end-1]
+end
+
 function request(c::RemarkableClient, verb::String, url::String, options::Dict=Dict())
     options = merge(options, Dict("Authorization" => "Bearer $(c.token)"))
-    @show options
-    return HTTP.request(verb, url, options)
+    return HTTP.request(verb,
+                        url,
+                        options;
+                        query = haskey(options, "query") ? dict_to_query(options["query"]) : nothing
+                    )
 end
 
 struct RemarkableAPI
@@ -82,7 +93,7 @@ function get_item(client::RemarkableClient, id::String, download::Bool = false)
                     STORAGE_API[] * ITEM_LIST,
                     Dict("query" => query))
     item = JSON.parse(String(response.body))
-    return response, item
+    return first(item)
 end
 
 function download_document(client::RemarkableClient, id::String)
