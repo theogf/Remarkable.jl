@@ -4,6 +4,8 @@ using JSON
 using ZipFile
 using Dates
 using Parameters
+using Setfield
+using AbstractTrees
 export RemarkableClient
 
 const STORAGE_API = Ref("https://document-storage-production-dot-remarkable-production.appspot.com")
@@ -85,11 +87,27 @@ end
 function list_items(client::RemarkableClient)
     @info "Listing all items"
     response = request(client, "GET", STORAGE_API[] * ITEM_LIST)
-    return JSON.parse(String(response.body))
+    items = JSON.parse(String(response.body))
+    docs = RemarkableObject[]
+    for item in items
+        item = Dict(Symbol(key)=>value for (key, value) in item)
+        if item[:Type] == "DocumentType"
+            doc = Document(;item...)
+            push!(docs, doc)
+        elseif item[:Type] == "CollectionType"
+            collec = Collection(;item...)
+            push!(docs, collec)
+        end
+    end
+    files = create_tree(docs)
 end
 
 function get_item(client::RemarkableClient, id::String, download::Bool = false)
-    query = Dict("doc" => id)
+    get_item(client, Document(ID = id), download)
+end
+
+function get_item(client::RemarkableClient, doc::Document, download::Bool = false)
+    query = Dict("doc" => doc.ID)
     if download
         query["withBlob"] = "true"
     end
@@ -99,21 +117,28 @@ function get_item(client::RemarkableClient, id::String, download::Bool = false)
                     STORAGE_API[] * ITEM_LIST,
                     Dict("query" => query))
     item = JSON.parse(String(response.body))
-    return first(item)
+    return Document(;first(item)...)
 end
 
 function download_document(client::RemarkableClient, id::String)
-    item = get_item(client, id, true)
-    url = item["BlobURLGet"]
+    download_document(client, Document(ID= id))
+end
 
-    @info "Downloading data"
-    response = request(client, "GET", url)
-    return response
+function download_document(client::RemarkableClient, doc::Document)
+    doc = get_item(client, doc.ID, true)
+    url = item["BlobURLGet"]
+    @info "Downloading data"    
+    return request(client, "GET", doc.BlobURLGet)
 end
 
 function download_document(client::RemarkableClient, id::String, path_target::String)
-    file_path = joinpath(path_target, id * ".zip")
-    response = download_document(client, id)
+    download_document(client, Document(ID=id), path_target)
+end
+
+function download_document(client::RemarkableClient, doc::Document, path_target::String)
+    file_name = isempty(doc.VissibleName) ? doc.ID : doc.VissibleName
+    file_path = joinpath(path_target, file_name * ".zip")
+    response = download_document(client, doc)
     write(file_path, response.body)
 end
 
