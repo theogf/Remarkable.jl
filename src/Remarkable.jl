@@ -105,6 +105,12 @@ function download_document(client::RemarkableClient, id::String)
     return response
 end
 
+function download_document(client::RemarkableClient, id::String, path_target::String)
+    file_path = joinpath(path_target, id * ".zip")
+    response = download_document(client, id)
+    write(file_path, response.body)
+end
+
 function discover_storage(client::RemarkableClient)
     @info "Discovering storage host"
     response = request(client,
