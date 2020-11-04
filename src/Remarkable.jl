@@ -2,6 +2,8 @@ module Remarkable
 using HTTP
 using JSON
 using ZipFile
+using Dates
+using Parameters
 export RemarkableClient
 
 const STORAGE_API = Ref("https://document-storage-production-dot-remarkable-production.appspot.com")
@@ -10,6 +12,10 @@ const STORAGE_URL = "/service/json/1/document-storage"
 const AUTH_API = "https://my.remarkable.com"
 const NEW_TOKEN = "/token/json/2/user/new"
 const ITEM_LIST = "/document-storage/json/2/docs"
+
+include("documents.jl")
+
+
 mutable struct RemarkableClient
     token::String
     function RemarkableClient(token::String="")
