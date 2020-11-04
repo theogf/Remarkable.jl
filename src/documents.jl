@@ -1,15 +1,15 @@
-abstract type RemarkableObject end
+ abstract type RemarkableObject end
 
 @with_kw struct Document <: RemarkableObject
-    ID::String
+    ID::String = string(uuid4())
     Version::Int = 1
     Message::String = ""
     Success::Int = true
     BlobURLGet::String = ""
-    BlobURLGetExpires::String = string(Date(0))
+    BlobURLGetExpires::String = string(DateTime(0)) * "Z"
     BlobURLPut::String = ""
-    BlobURLPutExpires::String = string(Date(0))
-    ModifiedClient::String = string(Date(0))
+    BlobURLPutExpires::String = string(DateTime(0)) * "Z"
+    ModifiedClient::String = string(DateTime(now(UTC))) * "Z"
     VissibleName::String = "unknown"
     CurrentPage::Int = 1
     Bookmarked::Bool = false
@@ -17,23 +17,26 @@ abstract type RemarkableObject end
     Parent::String = ""
 end
 
-@with_kw mutable struct Collection <: RemarkableObject
-    ID::String
+@with_kw struct Collection <: RemarkableObject
+    ID::String = string(uuid4())
     Version::Int = 1
     Message::String = ""
     Success::Int = true
     BlobURLGet::String = ""
-    BlobURLGetExpires::String = string(Date(0))
+    BlobURLGetExpires::String = string(DateTime(0))
     BlobURLPut::String = ""
-    BlobURLPutExpires::String = string(Date(0))
-    ModifiedClient::String = string(Date(0))
+    BlobURLPutExpires::String = string(DateTime(0)) 
+    ModifiedClient::String = string(DateTime(now(UTC))) * "Z"
     VissibleName::String = "unknown"
-    CurrentPage::Int = 1
+    CurrentPage::Int = 0
     Bookmarked::Bool = false
     Type::String = "CollectionType"
     Parent::String = ""
     objects::Vector{RemarkableObject} = RemarkableObject[]
 end
+
+Document(dict::Dict{String, Any}) = Document(;Dict(Symbol(key)=>value for (key, value) in dict)...)
+Collection(dict::Dict{String, Any}) = Collection(;Dict(Symbol(key)=>value for (key, value) in dict)...)
 
 Base.getindex(c::Collection, i::Int) = c.objects[i]
 Base.iterate(c::Collection, state) = iterate(c.objects, state)
@@ -48,19 +51,29 @@ AbstractTrees.printnode(io::IO, c::Collection) = print(io, c.VissibleName)
 
 function create_tree(docs::AbstractVector{<:RemarkableObject})
     root = Collection(ID = "", VissibleName = "Root")
+    push!(root.objects, Collection(ID = "Trash", VissibleName = "Trash"))
     update_obj!(root, docs) # Recursive loop on documents
+    return root
 end
 
 function update_obj!(col::Collection, docs)
-    objects = RemarkableObject[]
     for doc in docs
         if doc.Parent == col.ID
             update_obj!(doc, docs)
-            @info doc.VissibleName, col.VissibleName
-            push!(objects, doc)
+            push!(col.objects, doc)
         end
     end
-    col.objects = objects
 end
 
-update_obj!(::Document, docs) = nothing
+update_obj!(::Document, ::Any) = nothing
+
+function obj_to_dict(doc::Document)
+    dict = type2dict(doc)
+    return Dict(string(key)=>value for (key, value) in dict)
+end
+
+function obj_to_dict(col::Collection)
+    dict = type2dict(col)
+    delete!(dict, :objects)
+    return Dict(string(key)=>value for (key, value) in dict)
+end
