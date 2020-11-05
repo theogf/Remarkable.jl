@@ -4,12 +4,19 @@ authors = ["Theo Galy-Fajou <theo.galyfajou@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
+AbstractTrees = "0.3"
+HTTP = "0.8"
 JSON = "0.21"
+ZipFile = "0.9"
 julia = "1"
 
 [extras]
