@@ -3,15 +3,15 @@ using HTTP
 using JSON
 using ZipFile
 using Dates
-using Parameters
-using UUIDs
+using Parameters: @with_kw
+using UUIDs: uuid4
 using AbstractTrees: AbstractTrees, print_tree
 export  RemarkableClient,
         list_items,
         get_item,
         delete_item!,
         create_folder!,
-        download_pdf
+        download_pdf,
         upload_pdf!
 export print_tree
 

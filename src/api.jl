@@ -50,7 +50,7 @@ You can visualize them nicely via `print_tree`
 """
 function list_items(client::RemarkableClient)
     @info "Listing all items"
-    body = request(client, "GET", STORAGE_API[] * ITEM_LIST)
+    body = HTTP.request(client, "GET", STORAGE_API[] * ITEM_LIST)
     items = JSON.parse(String(body))
     docs = RemarkableObject[]
     for item in items
@@ -85,7 +85,7 @@ function get_item(client::RemarkableClient, doc::RemarkableObject, download::Boo
         query["withBlob"] = "true"
     end
     @info "Listing item"
-    body = request(client,
+    body = HTTP.request(client,
                     "GET", 
                     STORAGE_API[] * ITEM_LIST;
                     query = query)
@@ -155,7 +155,7 @@ end
 function Base.download(client::RemarkableClient, doc::Document)
     doc = get_item(client, doc.ID, true)
     @info "Downloading data"    
-    return request(client, "GET", doc.BlobURLGet)
+    return HTTP.request(client, "GET", doc.BlobURLGet)
 end
 
 function Base.download(client::RemarkableClient, id::String, path_target::String)
@@ -218,7 +218,7 @@ Upload `zip` file (actual zip file) with metadata from obj
 function upload_document!(client::RemarkableClient, obj::RemarkableObject, zipfile)
     obj = create_upload_request(client, obj)
     @info "Uploading data"
-    body = request(client, "PUT", obj.BlobURLPut, Dict(), zipfile)
+    body = HTTP.request(client, "PUT", obj.BlobURLPut, Dict(), zipfile)
     item = update_metadata!(client, obj)
     return item
 end

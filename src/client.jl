@@ -34,7 +34,7 @@ does just that!
 """
 function refresh_token!(client::RemarkableClient)
     @info "Refreshing the auth token"
-    body = request(client, "POST", AUTH_API * NEW_TOKEN)
+    body = HTTP.request(client, "POST", AUTH_API * NEW_TOKEN)
     new_token = String(body)
     set_token!(client, new_token)
     return new_token
@@ -47,7 +47,7 @@ Check that the storage URL is still the right one and update it if needed
 """
 function discover_storage(client::RemarkableClient)
     @info "Discovering storage host"
-    body = request(client,
+    body = HTTP.request(client,
                     "GET",
                     SERVICE_DISCOVERY_API * STORAGE_URL;
                     query = Dict(
@@ -119,5 +119,5 @@ function storage_request(client::RemarkableClient, verb::String, url::String, ob
 end
 
 function request_json(client::RemarkableClient, verb::String, url::String, data::Dict, headers::Dict=Dict(); kwargs...)
-    return request(client, verb, url, headers, JSON.json([data]); kwargs...)
+    return HTTP.request(client, verb, url, headers, JSON.json([data]); kwargs...)
 end
