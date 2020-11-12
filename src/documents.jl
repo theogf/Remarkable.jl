@@ -17,6 +17,11 @@
     Parent::String = ""
 end
 
+doc_color = crayon"blue"
+pdf_color = crayon"red"
+col_color = crayon"green"
+reset_color = Crayon(reset=true)
+
 @with_kw struct Collection <: RemarkableObject
     ID::String = string(uuid4())
     Version::Int = 1
@@ -46,8 +51,10 @@ Base.length(c::Collection) = length(c.objects)
 AbstractTrees.children(::Document) = ()
 AbstractTrees.children(c::Collection) = c.objects
 
-AbstractTrees.printnode(io::IO, d::Document) = print(io, d.VissibleName)
-AbstractTrees.printnode(io::IO, c::Collection) = print(io, c.VissibleName)
+ispdf(d::Document) = endswith(d.VissibleName, ".pdf")
+
+AbstractTrees.printnode(io::IO, d::Document) = print(io, ispdf(d) ? pdf_color : doc_color, d.VissibleName, reset_color)
+AbstractTrees.printnode(io::IO, c::Collection) = print(io, col_color, c.VissibleName, reset_color)
 
 function create_tree(docs::AbstractVector{<:RemarkableObject})
     root = Collection(ID = "", VissibleName = "Root")

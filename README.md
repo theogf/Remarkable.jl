@@ -19,9 +19,12 @@ This will download the item as a `.zip` file. If you just want the `.pdf`, `down
 - Upload a pdf! Call `upload_pdf!(client, path_to_pdf, pdf_name, parent)` where parent is the folder ID or a `Collection`.
 - Delete an item! Call `delete_item!(client, item)` and you can say good-bye!
 
+Everything is done with `HTTP.request`, you can pass any `request` keyword argument to all functions (for example setting `verbose=2`) (only avoid `query`)
+
 ## A small demo
 
 Here is a small script getting a list of file, downloading one, renaming it and reuploading it :
+
 ```julia
 client = RemarkableClient()
 items = list_items(client)

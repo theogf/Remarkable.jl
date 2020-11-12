@@ -32,9 +32,9 @@ token(c) = c.token[]
 Before running operations the token needs to be refreshed, `refresh_token!`
 does just that!
 """
-function refresh_token!(client::RemarkableClient)
+function refresh_token!(client::RemarkableClient; kwargs...)
     @info "Refreshing the auth token"
-    body = HTTP.request(client, "POST", AUTH_API * NEW_TOKEN)
+    body = HTTP.request(client, "POST", AUTH_API * NEW_TOKEN; kwargs...)
     new_token = String(body)
     set_token!(client, new_token)
     return new_token
@@ -45,7 +45,7 @@ end
 
 Check that the storage URL is still the right one and update it if needed
 """
-function discover_storage(client::RemarkableClient)
+function discover_storage(client::RemarkableClient; kwargs...)
     @info "Discovering storage host"
     body = HTTP.request(client,
                     "GET",
@@ -54,7 +54,8 @@ function discover_storage(client::RemarkableClient)
                             "environment" => "production",
                             "group" => "auth0|5a68dc51cb30df3877a1d7c4", # Legacy from RemarkableAPI
                             "apiVer" => 2,
-                        )
+                        ),
+                    kwargs...
                 )
     data = JSON.parse(String(body))
     if isempty(data) || data["Status"] != "OK"
@@ -87,13 +88,12 @@ Workhorse to communicate with the Remarkable servers.
 It is behaving like `HTTP.request`, except that it automatically uses
 the identification token in every request.
 """
-function HTTP.request(client::RemarkableClient, verb::String, url::String, headers::Dict=Dict(), body="", ; kwargs...)
+function HTTP.request(client::RemarkableClient, verb::String, url::String, headers::Dict=Dict(), body=""; kwargs...)
     headers = merge(headers, Dict("Authorization" => "Bearer $(token(client))"))
     response = HTTP.request(verb,
                         url,
                         headers,
                         body;
-                        verbose = 2,
                         kwargs...
             )
     body = response.body

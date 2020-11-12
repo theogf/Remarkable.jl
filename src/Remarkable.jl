@@ -3,6 +3,7 @@ using HTTP
 using JSON
 using ZipFile
 using Dates
+using Crayons
 using Parameters: @with_kw
 using UUIDs: uuid4
 using AbstractTrees: AbstractTrees, print_tree
