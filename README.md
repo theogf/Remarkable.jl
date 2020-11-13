@@ -5,7 +5,7 @@ API for the ReMarkable cloud. Based on [`RemarkableAPI`](https://github.com/spli
 ## Setup
 
 To use the API you first need to register your device:
-Get a authentification code on [https://my.remarkable.com/connect/desktop] and call `register("your code here")`. This will create a token and save it as `.token` in your current folder (you can change this by calling `register("code", path_to_token = "/home/my/path")`.
+Get a authentification code on https://my.remarkable.com/connect/desktop and call `register("your code here")`. This will create a token and save it as `.token` in your current folder (you can change this by calling `register("code", path_to_token = "/home/my/path")`.
 
 Once this is done create a client with `RemarkableClient()` which will by default look for a `.token` in your folder or take directly a token (check the docs!)
 
