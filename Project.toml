@@ -15,6 +15,7 @@ ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
 AbstractTrees = "0.3"
+Crayons = "4.0"
 HTTP = "0.8, 0.9"
 JSON = "0.21"
 Parameters = "0.12"
