@@ -4,7 +4,7 @@ using JSON
 using ZipFile
 using Dates
 using Crayons
-using Parameters: @with_kw
+using Parameters: @with_kw, type2dict
 using UUIDs: uuid4
 using AbstractTrees: AbstractTrees, print_tree
 export  RemarkableClient,

@@ -111,7 +111,7 @@ function delete_item!(client::RemarkableClient, id::String; kwargs...)
 end
 
 function delete_item!(client::RemarkableClient, obj::RemarkableObject; kwargs...)
-    @info "Deleting item $(obj.VissibleName)"
+    @info "Deleting item `$(title(obj))`"
     return storage_request(client, "PUT", "delete", obj_to_dict(obj); kwargs...);
 end
 
@@ -123,7 +123,7 @@ Update the metadata of an object, can be used to modify a file or create a
 Collection
 """
 function update_metadata!(client::RemarkableClient, obj::RemarkableObject; kwargs...)
-    @info "Updating item metadata ($(obj.VissibleName))"
+    @info "Updating item metadata `$(title(obj))`"
     storage_request(client, "PUT", UPDATE_STATUS, obj_to_dict(obj); kwargs...)
 end
 
@@ -138,7 +138,8 @@ function create_folder!(client::RemarkableClient, name::String, parent::String =
                     VissibleName = name,
                     )
     @info "Creating folder $name"
-    update_metadata!(client, item; kwargs...)
+    res = update_metadata!(client, item; kwargs...)
+    return Collection(res)
 end
 
 ## Download files
@@ -167,11 +168,11 @@ function Base.download(client::RemarkableClient, id::String, path_target::String
 end
 
 function Base.download(client::RemarkableClient, doc::Document, path_target::String; kwargs...)
-    file_name = isempty(doc.VissibleName) ? 
+    file_name = isempty(title(doc)) ? 
                     doc.ID : 
-                    (endswith(doc.VissibleName, ".pdf") ? 
-                        doc.VissibleName[1:end-4] :
-                        doc.VissibleName)
+                    (ispdf(doc) ? 
+                        title(doc)[1:end-4] :
+                        title(doc))
     file_path = joinpath(path_target, file_name * ".zip")
     body = download(client, doc; kwargs...)
     write(file_path, body)
@@ -181,11 +182,11 @@ end
 
 function download_pdf(client::RemarkableClient, doc::Document, path_target::String; kwargs...)
     file_path = download(client, doc, path_target; kwargs...)
-    file_name = isempty(doc.VissibleName) ? 
+    file_name = isempty(title(doc)) ? 
                     doc.ID : 
-                    (endswith(doc.VissibleName, ".pdf") ? 
-                        doc.VissibleName[1:end-4] :
-                        doc.VissibleName)
+                    (ispdf(doc) ? 
+                        title(doc)[1:end-4] :
+                        title(doc))
     z = ZipFile.Reader(file_path)
     for f in z.files
         if endswith(f, ".pdf")

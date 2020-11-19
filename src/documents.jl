@@ -4,13 +4,13 @@
     ID::String = string(uuid4())
     Version::Int = 1
     Message::String = ""
-    Success::Int = true
+    Success::Bool = true
     BlobURLGet::String = ""
-    BlobURLGetExpires::String = string(DateTime(0)) * "Z"
+    BlobURLGetExpires::String = string(DateTime(0))
     BlobURLPut::String = ""
-    BlobURLPutExpires::String = string(DateTime(0)) * "Z"
+    BlobURLPutExpires::String = string(DateTime(0))
     ModifiedClient::String = string(DateTime(now(UTC))) * "Z"
-    VissibleName::String = "unknown"
+    VissibleName::String = "new document"
     CurrentPage::Int = 1
     Bookmarked::Bool = false
     Type::String = "DocumentType"
@@ -26,13 +26,13 @@ reset_color = Crayon(reset=true)
     ID::String = string(uuid4())
     Version::Int = 1
     Message::String = ""
-    Success::Int = true
+    Success::Bool = true
     BlobURLGet::String = ""
     BlobURLGetExpires::String = string(DateTime(0))
     BlobURLPut::String = ""
     BlobURLPutExpires::String = string(DateTime(0)) 
     ModifiedClient::String = string(DateTime(now(UTC))) * "Z"
-    VissibleName::String = "unknown"
+    VissibleName::String = "new folder"
     CurrentPage::Int = 0
     Bookmarked::Bool = false
     Type::String = "CollectionType"
@@ -50,6 +50,8 @@ Base.length(c::Collection) = length(c.objects)
 
 AbstractTrees.children(::Document) = ()
 AbstractTrees.children(c::Collection) = c.objects
+
+title(x::RemarkableObject) = x.VissibleName
 
 ispdf(d::Document) = endswith(d.VissibleName, ".pdf")
 
@@ -84,3 +86,16 @@ function obj_to_dict(col::Collection)
     delete!(dict, :objects)
     return Dict(string(key)=>value for (key, value) in dict)
 end
+
+function find_col(f, client::RemarkableClient, col::Collection=list_items(client))
+    if f(col)
+        return col
+    end
+    for c in col
+        res = find_col(f, client, c)
+        isnothing(res) ? nothing : return res
+    end
+    return nothing
+end
+
+find_col(f, client::RemarkableClient, col::Document) = nothing

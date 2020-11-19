@@ -89,7 +89,7 @@ It is behaving like `HTTP.request`, except that it automatically uses
 the identification token in every request.
 """
 function HTTP.request(client::RemarkableClient, verb::String, url::String, headers::Dict=Dict(), body=""; kwargs...)
-    headers = merge(headers, Dict("Authorization" => "Bearer $(token(client))"))
+    merge!(headers, Dict("Authorization" => "Bearer $(token(client))"))
     response = HTTP.request(verb,
                         url,
                         headers,
