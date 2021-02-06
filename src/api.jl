@@ -15,7 +15,7 @@ function register(code::String; path_to_token::String = "", kwargs...)
             "deviceID" => string(uuid4())
         )
     @info "Registering device"
-    response = HTTP.request_json(
+    response = HTTP.request(
                     "POST",
                     AUTH_API,
                     data;
