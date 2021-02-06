@@ -2,3 +2,4 @@
 *.zip
 *.pdf
 .vscode
+.token

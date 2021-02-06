@@ -12,13 +12,14 @@ function register(code::String; path_to_token::String = "", kwargs...)
     data = Dict(
             "code" => code,
             "deviceDesc" => "desktop-windows",
-            "deviceID" => string(uuid4())
+            "deviceID" => string(uuid4()),
         )
     @info "Registering device"
-    response = HTTP.request_json(
+    response = HTTP.request(
                     "POST",
-                    AUTH_API,
-                    data;
+                    AUTH_API * NEW_DEVICE,
+                    [],
+                    JSON.json(data);
                     kwargs...
     )
     token = String(response.body)
@@ -35,6 +36,7 @@ function register()
     @warn """
         Hi, to use this API you first need to register this device.
         To do so go to https://my.remarkable.com/connect/desktop and ask for a new code!
+        Be careful you have 5 min to enter this code!
         Once you have it run `register(code)` (where `code` is a `String`).
         It will return your authentification token and also save your token in a local file.
         """
