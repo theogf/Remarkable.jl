@@ -6,15 +6,18 @@ Client used for identification. Simply contains the authentification token
 struct RemarkableClient
     token::Ref{String}
     function RemarkableClient(token::String=""; path_to_token::String=pwd())
-        if isempty(token) && !isfile(joinpath(path_to_token, ".token"))
+        if isempty(token) && (!isfile(joinpath(path_to_token, ".remarkable_jl_token")) || !isfile(joinpath(path_to_token, ".token")))
             error(
                 """
-                    You did not give a token or a path to .token file to `RemarkableClient`.
+                    You did not give a token or a path to a ".remarkable_jl_token" (or a deprecated ".token") file to `RemarkableClient`.
                     If you don't know what I am talking about run `register()`.
                     If you have a code, e.g "axervi", run `register(code)` to get a token.
                 """)
         elseif isfile(joinpath(path_to_token, ".token"))
+            @warn ".token files are deprecated, please rename it to a '.remarkable_jl_token' or rerun `register()`"
             token = String(read(joinpath(path_to_token, ".token")))
+        elseif isfile(joinpath(path_to_token, ".remarkable_jl_token"))
+            token = String(read(joinpath(path_to_token, ".remarkabke_jl_token")))
         end
         client = new(Ref(token))
         refresh_token!(client) # Get a new authentification
