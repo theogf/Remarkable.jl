@@ -7,9 +7,10 @@ struct RemarkableClient
     token::Ref{String}
     function RemarkableClient(token::String=""; path_to_token::String=pwd())
         if isempty(token) && (
-            !isfile(joinpath(path_to_token, ".remarkable_jl_token")) ||
+            !isfile(joinpath(path_to_token, ".remarkable_jl_token")) &&
             !isfile(joinpath(path_to_token, ".token"))
         )
+            @show 
             error(
                 """
                     You did not give a token or a path to a ".remarkable_jl_token" (or a deprecated ".token") file to `RemarkableClient`.
@@ -21,7 +22,7 @@ struct RemarkableClient
             @warn ".token files are deprecated, please rename it to a '.remarkable_jl_token' or rerun `register()`"
             token = String(read(joinpath(path_to_token, ".token")))
         elseif isfile(joinpath(path_to_token, ".remarkable_jl_token"))
-            token = String(read(joinpath(path_to_token, ".remarkabke_jl_token")))
+            token = String(read(joinpath(path_to_token, ".remarkable_jl_token")))
         end
         client = new(Ref(token))
         refresh_token!(client) # Get a new authentification
@@ -32,6 +33,8 @@ end
 
 set_token!(c::RemarkableClient, tok::String) = c.token[] = tok
 token(c) = c.token[]
+
+Base.show(io::IO, c::RemarkableClient) = print(io, "Remarkable Client")
 
 """
     refresh_token(client::RemarkableClient) -> token
@@ -60,7 +63,8 @@ function discover_storage(client::RemarkableClient; kwargs...)
         SERVICE_DISCOVERY_API * STORAGE_URL;
         query=Dict(
             "environment" => "production",
-            "group" => "auth0|5a68dc51cb30df3877a1d7c4", # Legacy from RemarkableAPI
+            "group" => "auth0%7C5a68dc51cb30df1234567890", # Found from https://akeil.de/posts/remarkable-cloud-api/
+            # "group" => "auth0|5a68dc51cb30df3877a1d7c4", # Legacy from RemarkableAPI
             "apiVer" => 2,
         ),
         kwargs...,
