@@ -1,4 +1,4 @@
- abstract type RemarkableObject end
+abstract type RemarkableObject end
 
 @with_kw struct Document <: RemarkableObject
     ID::String = string(uuid4())
@@ -20,7 +20,7 @@ end
 doc_color = crayon"blue"
 pdf_color = crayon"red"
 col_color = crayon"green"
-reset_color = Crayon(reset=true)
+reset_color = Crayon(; reset=true)
 
 @with_kw struct Collection <: RemarkableObject
     ID::String = string(uuid4())
@@ -30,7 +30,7 @@ reset_color = Crayon(reset=true)
     BlobURLGet::String = ""
     BlobURLGetExpires::String = string(DateTime(0))
     BlobURLPut::String = ""
-    BlobURLPutExpires::String = string(DateTime(0)) 
+    BlobURLPutExpires::String = string(DateTime(0))
     ModifiedClient::String = string(DateTime(now(UTC))) * "Z"
     VissibleName::String = "new folder"
     CurrentPage::Int = 0
@@ -40,8 +40,12 @@ reset_color = Crayon(reset=true)
     objects::Vector{RemarkableObject} = RemarkableObject[]
 end
 
-Document(dict::Dict{String, Any}) = Document(;Dict(Symbol(key)=>value for (key, value) in dict)...)
-Collection(dict::Dict{String, Any}) = Collection(;Dict(Symbol(key)=>value for (key, value) in dict)...)
+function Document(dict::Dict{String,Any})
+    return Document(; Dict(Symbol(key) => value for (key, value) in dict)...)
+end
+function Collection(dict::Dict{String,Any})
+    return Collection(; Dict(Symbol(key) => value for (key, value) in dict)...)
+end
 
 Base.getindex(c::Collection, i::Int) = c.objects[i]
 Base.iterate(c::Collection, state) = iterate(c.objects, state)
@@ -55,12 +59,16 @@ title(x::RemarkableObject) = x.VissibleName
 
 ispdf(d::Document) = endswith(d.VissibleName, ".pdf")
 
-AbstractTrees.printnode(io::IO, d::Document) = print(io, ispdf(d) ? pdf_color : doc_color, d.VissibleName, reset_color)
-AbstractTrees.printnode(io::IO, c::Collection) = print(io, col_color, c.VissibleName, reset_color)
+function AbstractTrees.printnode(io::IO, d::Document)
+    return print(io, ispdf(d) ? pdf_color : doc_color, d.VissibleName, reset_color)
+end
+function AbstractTrees.printnode(io::IO, c::Collection)
+    return print(io, col_color, c.VissibleName, reset_color)
+end
 
 function create_tree(docs::AbstractVector{<:RemarkableObject})
-    root = Collection(ID = "", VissibleName = "Root")
-    push!(root.objects, Collection(ID = "Trash", VissibleName = "Trash"))
+    root = Collection(; ID="", VissibleName="Root")
+    push!(root.objects, Collection(; ID="Trash", VissibleName="Trash"))
     update_obj!(root, docs) # Recursive loop on documents
     return root
 end
@@ -78,13 +86,13 @@ update_obj!(::Document, ::Any) = nothing
 
 function obj_to_dict(doc::Document)
     dict = type2dict(doc)
-    return Dict(string(key)=>value for (key, value) in dict)
+    return Dict(string(key) => value for (key, value) in dict)
 end
 
 function obj_to_dict(col::Collection)
     dict = type2dict(col)
     delete!(dict, :objects)
-    return Dict(string(key)=>value for (key, value) in dict)
+    return Dict(string(key) => value for (key, value) in dict)
 end
 
 function find_col(f, client::RemarkableClient, col::Collection=list_items(client))

@@ -17,7 +17,7 @@ From there you can :
 - Download an item! Just call `download(client, item, local_path)`.
 This will download the item as a `.zip` file. If you just want the `.pdf`, `download_pdf` is also possible.
 - Upload a pdf! Call `upload_pdf!(client, path_to_pdf, pdf_name, parent)` where parent is the folder ID or a `Collection`.
-- Delete an item! Call `delete_item!(client, item)` and you can say good-bye!
+- Delete an item! Call `delete_item!(client, item)` and you can say goodbye!
 
 Everything is done with `HTTP.request`, you can pass any `request` keyword argument to all functions (for example setting `verbose=2`) (only avoid `query`)
 

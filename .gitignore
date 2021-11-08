@@ -3,3 +3,4 @@
 *.pdf
 .vscode
 .token
+.remarkable_jl_token
