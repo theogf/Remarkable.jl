@@ -6,13 +6,17 @@ Client used for identification. Simply contains the authentification token
 struct RemarkableClient
     token::Ref{String}
     function RemarkableClient(token::String=""; path_to_token::String=pwd())
-        if isempty(token) && (!isfile(joinpath(path_to_token, ".remarkable_jl_token")) || !isfile(joinpath(path_to_token, ".token")))
+        if isempty(token) && (
+            !isfile(joinpath(path_to_token, ".remarkable_jl_token")) ||
+            !isfile(joinpath(path_to_token, ".token"))
+        )
             error(
                 """
                     You did not give a token or a path to a ".remarkable_jl_token" (or a deprecated ".token") file to `RemarkableClient`.
                     If you don't know what I am talking about run `register()`.
                     If you have a code, e.g "axervi", run `register(code)` to get a token.
-                """)
+                """,
+            )
         elseif isfile(joinpath(path_to_token, ".token"))
             @warn ".token files are deprecated, please rename it to a '.remarkable_jl_token' or rerun `register()`"
             token = String(read(joinpath(path_to_token, ".token")))
@@ -50,16 +54,17 @@ Check that the storage URL is still the right one and update it if needed
 """
 function discover_storage(client::RemarkableClient; kwargs...)
     @info "Discovering storage host"
-    body = HTTP.request(client,
-                    "GET",
-                    SERVICE_DISCOVERY_API * STORAGE_URL;
-                    query = Dict(
-                            "environment" => "production",
-                            "group" => "auth0|5a68dc51cb30df3877a1d7c4", # Legacy from RemarkableAPI
-                            "apiVer" => 2,
-                        ),
-                    kwargs...
-                )
+    body = HTTP.request(
+        client,
+        "GET",
+        SERVICE_DISCOVERY_API * STORAGE_URL;
+        query=Dict(
+            "environment" => "production",
+            "group" => "auth0|5a68dc51cb30df3877a1d7c4", # Legacy from RemarkableAPI
+            "apiVer" => 2,
+        ),
+        kwargs...,
+    )
     data = JSON.parse(String(body))
     if isempty(data) || data["Status"] != "OK"
         error("Service discovery failed")
@@ -67,8 +72,6 @@ function discover_storage(client::RemarkableClient; kwargs...)
     STORAGE_API[] = "https://" * data["Host"]
     return STORAGE_API[]
 end
-
-
 
 """
     dict_to_query(d::Dict) -> String
@@ -81,7 +84,7 @@ function dict_to_query(d::Dict)
     for (key, value) in d
         query *= "$(key)=$(value)&"
     end
-    query = query[1:end-1]
+    return query = query[1:(end - 1)]
 end
 
 """
@@ -91,14 +94,16 @@ Workhorse to communicate with the Remarkable servers.
 It is behaving like `HTTP.request`, except that it automatically uses
 the identification token in every request.
 """
-function HTTP.request(client::RemarkableClient, verb::String, url::String, headers::Dict=Dict(), body=""; kwargs...)
+function HTTP.request(
+    client::RemarkableClient,
+    verb::String,
+    url::String,
+    headers::Dict=Dict(),
+    body="";
+    kwargs...,
+)
     merge!(headers, Dict("Authorization" => "Bearer $(token(client))"))
-    response = HTTP.request(verb,
-                        url,
-                        headers,
-                        body;
-                        kwargs...
-            )
+    response = HTTP.request(verb, url, headers, body; kwargs...)
     body = response.body
     # if isempty(body)
     #     error("Returned empty body message")
@@ -112,7 +117,9 @@ end
 Specific request related to storage. Converts `obj` to a JSON string,
 and automatically transform the body in another JSON.
 """
-function storage_request(client::RemarkableClient, verb::String, url::String, obj::Dict; kwargs...)
+function storage_request(
+    client::RemarkableClient, verb::String, url::String, obj::Dict; kwargs...
+)
     body = request_json(client, verb, STORAGE_API[] * ITEM * url, obj; kwargs...)
     data = first(JSON.parse(String(body)))
     if !data["Success"]
@@ -121,6 +128,13 @@ function storage_request(client::RemarkableClient, verb::String, url::String, ob
     return data
 end
 
-function request_json(client::RemarkableClient, verb::String, url::String, data::Dict, headers::Dict=Dict(); kwargs...)
+function request_json(
+    client::RemarkableClient,
+    verb::String,
+    url::String,
+    data::Dict,
+    headers::Dict=Dict();
+    kwargs...,
+)
     return HTTP.request(client, verb, url, headers, JSON.json([data]); kwargs...)
 end

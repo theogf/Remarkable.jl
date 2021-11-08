@@ -8,20 +8,12 @@
 Create a new authentification token from a code obtained on https://my.remarkable.com/connect/desktop
 If a code is not provided a tutorial is given.
 """
-function register(code::String; path_to_token::String = "", kwargs...)
+function register(code::String; path_to_token::String="", kwargs...)
     data = Dict(
-            "code" => code,
-            "deviceDesc" => "desktop-windows",
-            "deviceID" => string(uuid4()),
-        )
-    @info "Registering device"
-    response = HTTP.request(
-                    "POST",
-                    AUTH_API * NEW_DEVICE,
-                    [],
-                    JSON.json(data);
-                    kwargs...
+        "code" => code, "deviceDesc" => "desktop-windows", "deviceID" => string(uuid4())
     )
+    @info "Registering device"
+    response = HTTP.request("POST", AUTH_API * NEW_DEVICE, [], JSON.json(data); kwargs...)
     token = String(response.body)
     @info "Token : $token"
     if isempty(path_to_token)
@@ -42,7 +34,6 @@ function register()
         """
 end
 
-
 ## Items accessors
 
 """
@@ -57,19 +48,17 @@ function list_items(client::RemarkableClient; kwargs...)
     items = JSON.parse(String(body))
     docs = RemarkableObject[]
     for item in items
-        item = Dict(Symbol(key)=>value for (key, value) in item)
+        item = Dict(Symbol(key) => value for (key, value) in item)
         if item[:Type] == "DocumentType"
-            doc = Document(;item...)
+            doc = Document(; item...)
             push!(docs, doc)
         elseif item[:Type] == "CollectionType"
-            collec = Collection(;item...)
+            collec = Collection(; item...)
             push!(docs, collec)
         end
     end
     return create_tree(docs)
 end
-
-
 
 """
     get_item(client, id::String, download = false)
@@ -78,27 +67,22 @@ end
 Return a `RemarkableObject` given an ID or an existing `RemarkableObject`,
 using `download=true` will give the `BlobURLGet` to download the files
 """
-function get_item(client::RemarkableClient, id::String, download::Bool = false; kwargs...)
-    get_item(client, Document(ID = id), download; kwargs...)
+function get_item(client::RemarkableClient, id::String, download::Bool=false; kwargs...)
+    return get_item(client, Document(; ID=id), download; kwargs...)
 end
 
-function get_item(client::RemarkableClient, doc::RemarkableObject, download::Bool = false; kwargs...)
+function get_item(
+    client::RemarkableClient, doc::RemarkableObject, download::Bool=false; kwargs...
+)
     query = Dict("doc" => doc.ID)
     if download
         query["withBlob"] = "true"
     end
     @info "Listing item"
-    body = HTTP.request(
-                    client,
-                    "GET", 
-                    STORAGE_API[] * ITEM_LIST;
-                    query = query,
-                    kwargs...
-                    )
+    body = HTTP.request(client, "GET", STORAGE_API[] * ITEM_LIST; query=query, kwargs...)
     item = JSON.parse(String(body))
     return Document(first(item))
 end
-
 
 ## Item modificators 
 
@@ -109,14 +93,13 @@ end
 Delete the object from your collection (online)
 """
 function delete_item!(client::RemarkableClient, id::String; kwargs...)
-    delete_item!(client, Document(ID = id); kwargs...)
+    return delete_item!(client, Document(; ID=id); kwargs...)
 end
 
 function delete_item!(client::RemarkableClient, obj::RemarkableObject; kwargs...)
     @info "Deleting item `$(title(obj))`"
-    return storage_request(client, "PUT", "delete", obj_to_dict(obj); kwargs...);
+    return storage_request(client, "PUT", "delete", obj_to_dict(obj); kwargs...)
 end
-
 
 """
     update_metadata!(client, obj::RemarkableObject) -> 
@@ -126,7 +109,7 @@ Collection
 """
 function update_metadata!(client::RemarkableClient, obj::RemarkableObject; kwargs...)
     @info "Updating item metadata `$(title(obj))`"
-    storage_request(client, "PUT", UPDATE_STATUS, obj_to_dict(obj); kwargs...)
+    return storage_request(client, "PUT", UPDATE_STATUS, obj_to_dict(obj); kwargs...)
 end
 
 """
@@ -134,18 +117,16 @@ end
 
 Create a folder (Collection) in `parent` (root by default)
 """
-function create_folder!(client::RemarkableClient, name::String, parent::String = ""; kwargs...)
-    item = Collection(
-                    Parent = parent,
-                    VissibleName = name,
-                    )
+function create_folder!(
+    client::RemarkableClient, name::String, parent::String=""; kwargs...
+)
+    item = Collection(; Parent=parent, VissibleName=name)
     @info "Creating folder $name"
     res = update_metadata!(client, item; kwargs...)
     return Collection(res)
 end
 
 ## Download files
-
 
 """
     download_document(client, id::String, [path_target::String]) -> ZipFile Body
@@ -156,25 +137,24 @@ The document is always given as a `ZipFile` and can be saved via `write(filepath
 if `path_target` is given, the zip file is automatically written and named.
 """
 function Base.download(client::RemarkableClient, id::String; kwargs...)
-    download(client, Document(ID= id); kwargs...)
+    return download(client, Document(; ID=id); kwargs...)
 end
 
 function Base.download(client::RemarkableClient, doc::Document; kwargs...)
     doc = get_item(client, doc.ID, true)
-    @info "Downloading data"    
+    @info "Downloading data"
     return HTTP.request(client, "GET", doc.BlobURLGet; kwargs...)
 end
 
 function Base.download(client::RemarkableClient, id::String, path_target::String; kwargs...)
-    download_document(client, Document(ID=id), path_target; kwargs...)
+    return download_document(client, Document(; ID=id), path_target; kwargs...)
 end
 
-function Base.download(client::RemarkableClient, doc::Document, path_target::String; kwargs...)
-    file_name = isempty(title(doc)) ? 
-                    doc.ID : 
-                    (ispdf(doc) ? 
-                        title(doc)[1:end-4] :
-                        title(doc))
+function Base.download(
+    client::RemarkableClient, doc::Document, path_target::String; kwargs...
+)
+    file_name =
+        isempty(title(doc)) ? doc.ID : (ispdf(doc) ? title(doc)[1:(end - 4)] : title(doc))
     file_path = joinpath(path_target, file_name * ".zip")
     body = download(client, doc; kwargs...)
     write(file_path, body)
@@ -182,13 +162,12 @@ function Base.download(client::RemarkableClient, doc::Document, path_target::Str
     return file_path
 end
 
-function download_pdf(client::RemarkableClient, doc::Document, path_target::String; kwargs...)
+function download_pdf(
+    client::RemarkableClient, doc::Document, path_target::String; kwargs...
+)
     file_path = download(client, doc, path_target; kwargs...)
-    file_name = isempty(title(doc)) ? 
-                    doc.ID : 
-                    (ispdf(doc) ? 
-                        title(doc)[1:end-4] :
-                        title(doc))
+    file_name =
+        isempty(title(doc)) ? doc.ID : (ispdf(doc) ? title(doc)[1:(end - 4)] : title(doc))
     z = ZipFile.Reader(file_path)
     for f in z.files
         if endswith(f, ".pdf")
@@ -201,20 +180,20 @@ end
 
 ## Upload files
 
-
-
 """
     create_upload_request(client, doc::Document=Document()) -> Document
 
 Create a request to upload a document with a given id.
 """
-function create_upload_request(client::RemarkableClient, doc::Document=Document(); kwargs...)
+function create_upload_request(
+    client::RemarkableClient, doc::Document=Document(); kwargs...
+)
     @info "Creating upload request"
     data = storage_request(client, "PUT", "upload/request", obj_to_dict(doc); kwargs...)
     if isempty(data["BlobURLPut"])
         error("Failed to get URL for upload")
     end
-    return Document(doc; BlobURLPut = data["BlobURLPut"])
+    return Document(doc; BlobURLPut=data["BlobURLPut"])
 end
 
 """
@@ -222,7 +201,9 @@ end
 
 Upload `zip` file (actual zip file) with metadata from obj
 """
-function upload_document!(client::RemarkableClient, obj::RemarkableObject, zipfile; kwargs...)
+function upload_document!(
+    client::RemarkableClient, obj::RemarkableObject, zipfile; kwargs...
+)
     obj = create_upload_request(client, obj; kwargs...)
     @info "Uploading data"
     body = HTTP.request(client, "PUT", obj.BlobURLPut, Dict(), zipfile; kwargs...)
@@ -235,15 +216,20 @@ end
 
 Create a document for the given pdf and upload it.
 """
-function upload_pdf!(client::RemarkableClient, pdf_path::String, pdf_name::String = basename(pdf_path), parent::String = ""; kwargs...)
-    upload_pdf!(client, read(pdf_path), pdf_name, parent; kwargs...)
+function upload_pdf!(
+    client::RemarkableClient,
+    pdf_path::String,
+    pdf_name::String=basename(pdf_path),
+    parent::String="";
+    kwargs...,
+)
+    return upload_pdf!(client, read(pdf_path), pdf_name, parent; kwargs...)
 end
 
-function upload_pdf!(client::RemarkableClient, pdf, pdfname::String, parent::String=""; kwargs...)
-    doc = Document(
-        Parent = parent,
-        VissibleName = pdfname
-    )
+function upload_pdf!(
+    client::RemarkableClient, pdf, pdfname::String, parent::String=""; kwargs...
+)
+    doc = Document(; Parent=parent, VissibleName=pdfname)
     ## Create the ZIP file here with ZipFile
     tmpdir = mktempdir()
     tmpfile = joinpath(tmpdir, doc.ID * ".zip")
@@ -264,12 +250,12 @@ function upload_pdf!(client::RemarkableClient, pdf, pdfname::String, parent::Str
         "margins" => 100,
         "pageCount" => 0,
         "textScale" => 1,
-        "transform" => Dict()
+        "transform" => Dict(),
     )
     write(content, JSON.json(json_content))
-    
+
     close(zip)
     # zip = ZipFile.Reader(tmpfile)
     @info "Zip file temporarily saved at $(tmpfile)."
-    upload_document!(client, doc, read(joinpath(tmpfile)); kwargs...)
+    return upload_document!(client, doc, read(joinpath(tmpfile)); kwargs...)
 end
