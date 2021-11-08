@@ -21,7 +21,7 @@ function register(code::String; path_to_token::String="", kwargs...)
     end
     write(joinpath(path_to_token, ".remarkable_jl_token"), token)
     @info "Token saved at $(joinpath(path_to_token))"
-    return token
+    return nothing
 end
 
 function register()
@@ -29,7 +29,7 @@ function register()
         Hi, to use this API you first need to register this device.
         To do so go to https://my.remarkable.com/device/desktop/connect and ask for a new code!
         Be careful you have 5 min to enter this code!
-        Once you have it run `register(code)` (where `code` is a `String`).
+        Once you have it run `Remarkable.register(code)` (where `code` is a `String`).
         It will return your authentification token and also save your token in a local file.
         """
 end
