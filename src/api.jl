@@ -170,7 +170,7 @@ function download_pdf(
         isempty(title(doc)) ? doc.ID : (ispdf(doc) ? title(doc)[1:(end - 4)] : title(doc))
     z = ZipFile.Reader(file_path)
     for f in z.files
-        if endswith(f, ".pdf")
+        if endswith(f.name, ".pdf")
             write(joinpath(path_target, file_name * ".pdf"), f)
             @info "Extracted $(file_name).pdf"
             return joinpath(path_target, file_name * ".pdf")
