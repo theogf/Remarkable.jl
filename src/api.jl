@@ -44,6 +44,13 @@ You can visualize them nicely via `print_tree`
 """
 function list_items(client::RemarkableClient; kwargs...)
     @info "Listing all items"
+    @show link = BASE_URL[] * API_DOWNLOAD
+    body = HTTP.request(client, "POST", BASE_URL[] * API_DOWNLOAD; query = Dict(
+        "http_method" => "GET",
+        "relative_path" => "root",
+    ))
+
+    @show String(body)
     body = HTTP.request(client, "GET", STORAGE_API[] * ITEM_LIST; kwargs...)
     items = JSON.parse(String(body))
     docs = RemarkableObject[]

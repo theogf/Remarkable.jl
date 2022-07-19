@@ -27,6 +27,7 @@ struct RemarkableClient
         client = new(Ref(token))
         refresh_token!(client) # Get a new authentification
         discover_storage(client)
+        refresh_base_url(client)
         return client
     end
 end
@@ -34,7 +35,7 @@ end
 set_token!(c::RemarkableClient, tok::String) = c.token[] = tok
 token(c) = c.token[]
 
-Base.show(io::IO, c::RemarkableClient) = print(io, "Remarkable Client")
+Base.show(io::IO, ::RemarkableClient) = print(io, "Remarkable Client")
 
 """
     refresh_token(client::RemarkableClient) -> token
@@ -75,6 +76,22 @@ function discover_storage(client::RemarkableClient; kwargs...)
     end
     STORAGE_API[] = "https://" * data["Host"]
     return STORAGE_API[]
+end
+
+function refresh_base_url(client::RemarkableClient)
+    !isempty(BASE_URL[]) && return BASE_URL[]
+    @info "Obtaining base url"
+    body = HTTP.request(client, "GET", SERVICE_DISCOVERY_API * "/service/json/1/blob-storage";
+    query = Dict(
+        "environment" => "production",
+        "apiVer" => "1",
+    ))
+    data = JSON.parse(String(body))
+    if data["Status"] != "OK"
+        error("Failed to find BASE_URL")
+    end
+    BASE_URL[] = data["Host"]
+    return BASE_URL[]
 end
 
 """
