@@ -4,7 +4,7 @@ const STORAGE_API = Ref(
 )
 const SERVICE_DISCOVERY_API = "https://service-manager-production-dot-remarkable-production.appspot.com"
 const STORAGE_URL = "/service/json/1/document-storage"
-const AUTH_API = "https://webapp-production-dot-remarkable-production.appspot.com"
+const AUTH_API = "https://webapp-prod.cloud.remarkable.engineering"
 const UPDATE_STATUS = "upload/update-status"
 const NEW_DEVICE = "/token/json/2/device/new"
 const NEW_TOKEN = "/token/json/2/user/new"
